@@ -3,6 +3,7 @@ import time
 import re
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd  # 新增
 
 
 
@@ -54,6 +55,8 @@ if __name__ == "__main__":
     # 3. 搜索广告公司
     results = search_places("advertising agency", dubai_center, radius=10000)
 
+    data = []  # 新增：用于存储所有公司信息
+
     # 4. 获取详细信息 + 爬官网邮箱
     for place in results:
         details = get_place_details(place["place_id"])
@@ -64,9 +67,21 @@ if __name__ == "__main__":
 
         emails = extract_emails_from_website(website)
 
+        data.append({
+            "公司名": name,
+            "地址": addr,
+            "电话": phone,
+            "官网": website,
+            "邮箱": ", ".join(emails) if emails else "未找到"
+        })
+
         print("公司名:", name)
         print("地址:", addr)
         print("电话:", phone)
         print("官网:", website)
         print("邮箱:", ", ".join(emails) if emails else "未找到")
         print("-" * 60)
+
+    # 新增：保存到 Excel
+    df = pd.DataFrame(data)
+    df.to_excel("dubai_agencies.xlsx", index=False)
