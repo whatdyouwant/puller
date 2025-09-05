@@ -49,24 +49,44 @@ def extract_emails_from_website(url):
         return []
 
 if __name__ == "__main__":
-    # 2. 设置迪拜的经纬度坐标（市中心）
-    dubai_center = (25.276987, 55.296249)
+    # 2. 设置多个迪拜的经纬度坐标，覆盖更大范围
+    locations = [
+        (25.276987, 55.296249),  # 市中心
+        (25.204849, 55.270783),  # 迪拜老城区
+        (25.197197, 55.274376),  # 迪拜码头附近
+        (25.112222, 55.138889),  # 朱美拉
+        (25.253174, 55.365673),  # 商业湾
+    ]
 
-    # 3. 搜索广告公司
-    results = search_places("advertising agency", dubai_center, radius=10000)
+    # 3. 多个关键词
+    keywords = [
+        "advertising agency",
+        "marketing agency",
+        "digital agency",
+        "creative agency",
+        "media agency",
+        "branding agency",
+        "广告公司",
+        "市场营销公司"
+    ]
 
-    data = []  # 新增：用于存储所有公司信息
+    all_places = {}
+    for loc in locations:
+        for kw in keywords:
+            print(f"搜索: {kw} @ {loc}")
+            results = search_places(kw, loc, radius=10000)
+            for place in results:
+                pid = place["place_id"]
+                all_places[pid] = place  # 用 place_id 去重
 
-    # 4. 获取详细信息 + 爬官网邮箱
-    for place in results:
-        details = get_place_details(place["place_id"])
+    data = []
+    for pid, place in all_places.items():
+        details = get_place_details(pid)
         name = details.get("name")
         addr = details.get("formatted_address")
         phone = details.get("formatted_phone_number")
         website = details.get("website")
-
         emails = extract_emails_from_website(website)
-
         data.append({
             "公司名": name,
             "地址": addr,
@@ -74,7 +94,6 @@ if __name__ == "__main__":
             "官网": website,
             "邮箱": ", ".join(emails) if emails else "未找到"
         })
-
         print("公司名:", name)
         print("地址:", addr)
         print("电话:", phone)
@@ -82,6 +101,6 @@ if __name__ == "__main__":
         print("邮箱:", ", ".join(emails) if emails else "未找到")
         print("-" * 60)
 
-    # 新增：保存到 Excel
+    # 保存到 Excel
     df = pd.DataFrame(data)
     df.to_excel("dubai_agencies.xlsx", index=False)
